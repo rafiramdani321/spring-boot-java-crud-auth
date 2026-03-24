@@ -361,4 +361,90 @@ class AddressControllerTest {
                  assertTrue(addressRepository.existsById(response.getData().getId()));
               });
    }
+
+   @Test
+   void testDeleteAddressContactNotFound() throws Exception {
+      mockMvc.perform(
+                      delete("/api/contacts/not-found/addresses/test")
+                              .accept(MediaType.APPLICATION_JSON)
+                              .contentType(MediaType.APPLICATION_JSON)
+                              .header("X-API-TOKEN", "token")
+              ).andExpect(status().isNotFound())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andDo(result -> {
+                 WebResponse<AddressResponse> response = objectMapper.readValue(
+                         result.getResponse().getContentAsString(),
+                         new TypeReference<WebResponse<AddressResponse>>() {
+                         }
+                 );
+
+                 assertNotNull(response.getErrors());
+                 assertEquals("Business Error", response.getMessage());
+                 assertEquals("CONTACT_NOT_FOUND", response.getCode());
+
+                 assertTrue(response.getErrors().containsKey("global"));
+                 assertTrue(response.getErrors().get("global").contains("Contact not found"));
+
+              });
+   }
+
+   @Test
+   void testDeleteAddressNotFound() throws Exception {
+      mockMvc.perform(
+                      delete("/api/contacts/test/addresses/not-found")
+                              .accept(MediaType.APPLICATION_JSON)
+                              .contentType(MediaType.APPLICATION_JSON)
+                              .header("X-API-TOKEN", "token")
+              ).andExpect(status().isNotFound())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andDo(result -> {
+                 WebResponse<AddressResponse> response = objectMapper.readValue(
+                         result.getResponse().getContentAsString(),
+                         new TypeReference<WebResponse<AddressResponse>>() {
+                         }
+                 );
+
+                 assertNotNull(response.getErrors());
+                 assertEquals("Business Error", response.getMessage());
+                 assertEquals("ADDRESS_NOT_FOUND", response.getCode());
+
+                 assertTrue(response.getErrors().containsKey("global"));
+                 assertTrue(response.getErrors().get("global").contains("Address not found"));
+
+              });
+   }
+
+   @Test
+   void testDeleteSuccess() throws Exception {
+      Contact contact = contactRepository.findById("test").orElseThrow();
+
+      Address address = Address.create("test", contact);
+      address.setStreet("Jalan");
+      address.setCity("Jakarta");
+      address.setProvince("DKI");
+      address.setCountry("Indonesia");
+      address.setPostalCode("123");
+
+      addressRepository.save(address);
+
+      mockMvc.perform(
+                      delete("/api/contacts/test/addresses/test")
+                              .accept(MediaType.APPLICATION_JSON)
+                              .contentType(MediaType.APPLICATION_JSON)
+                              .header("X-API-TOKEN", "token")
+              ).andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andDo(result -> {
+                 WebResponse<AddressResponse> response = objectMapper.readValue(
+                         result.getResponse().getContentAsString(),
+                         new TypeReference<WebResponse<AddressResponse>>() {
+                         }
+                 );
+
+                 assertNull(response.getErrors());
+                 assertEquals("Delete Address Success", response.getMessage());
+
+                 assertFalse(addressRepository.existsById(address.getId()));
+              });
+   }
 }
