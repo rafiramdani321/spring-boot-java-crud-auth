@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,15 +39,18 @@ public class AddressService {
    }
 
    private Address toEntity(CreateAddressRequest request, Contact contact){
-      return Address.builder()
-              .id(UUID.randomUUID().toString())
-              .street(request.getStreet())
-              .city(request.getCity())
-              .province(request.getProvince())
-              .country(request.getCountry())
-              .postalCode(request.getPostalCode())
-              .contact(contact)
-              .build();
+      Address address = Address.create(
+              UUID.randomUUID().toString(),
+              contact
+      );
+
+      address.setStreet(request.getStreet());
+      address.setCity(request.getCity());
+      address.setProvince(request.getProvince());
+      address.setCountry(request.getCountry());
+      address.setPostalCode(request.getPostalCode());
+
+      return address;
    }
 
    private Address findAddressOrThrow(Contact contact, String id){
@@ -68,6 +72,14 @@ public class AddressService {
       return toAddressResponse(address);
    }
 
+   @Transactional(readOnly = true)
+   public AddressResponse get(User user, String contactId, String addressId){
+      Contact contact = contactService.getContactEntity(user, contactId);
+      Address address = findAddressOrThrow(contact, addressId);
+
+      return toAddressResponse(address);
+   }
+
    @Transactional
    public AddressResponse update(User user, UpdateAddressRequest request){
       Contact contact = contactService.getContactEntity(user, request.getContactId());
@@ -80,6 +92,22 @@ public class AddressService {
       address.setPostalCode(request.getPostalCode());
 
       return toAddressResponse(address);
+   }
+
+   @Transactional
+   public void remove(User user, String contactId, String addressId){
+      Contact contact = contactService.getContactEntity(user, contactId);
+      Address address = findAddressOrThrow(contact, addressId);
+
+      addressRepository.delete(address);
+   }
+
+   @Transactional
+   public List<AddressResponse> list(User user, String contactId){
+      Contact contact = contactService.getContactEntity(user, contactId);
+
+      List<Address> addresses = addressRepository.findAllByContact(contact);
+      return addresses.stream().map(this::toAddressResponse).toList();
    }
 
 }

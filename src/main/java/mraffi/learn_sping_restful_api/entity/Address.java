@@ -7,7 +7,6 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Entity
 @Table(name = "addresses")
 public class Address {
@@ -25,8 +24,14 @@ public class Address {
     private String postalCode;
 
     @ManyToOne
-    @JoinColumn(name = "contact_id", referencedColumnName = "id")
+    @JoinColumn(name = "contact_id", referencedColumnName = "id", nullable = false)
     @Setter(AccessLevel.NONE)
     private Contact contact;
 
+    public static Address create(String id, Contact contact){
+        Address address = new Address();
+        address.id = id;
+        address.contact = contact;
+        return address;
+    }
 }

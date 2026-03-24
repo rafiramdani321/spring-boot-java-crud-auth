@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class AddressController {
@@ -34,7 +36,21 @@ public class AddressController {
               .build();
    }
 
-   @PostMapping(
+   @GetMapping(
+           path = "/api/contacts/{contactId}/addresses/{addressId}",
+           produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public WebResponse<AddressResponse> get(User user,
+                                           @PathVariable("contactId") String contactId,
+                                           @PathVariable("addressId") String addressId){
+      AddressResponse addressResponse = addressService.get(user, contactId, addressId);
+      return WebResponse.<AddressResponse>builder()
+              .data(addressResponse)
+              .message("Fetch Data Address Success")
+              .build();
+   }
+
+   @PutMapping(
            path = "/api/contacts/{contactId}/addresses/{addressId}",
            consumes = MediaType.APPLICATION_JSON_VALUE,
            produces = MediaType.APPLICATION_JSON_VALUE
@@ -50,6 +66,31 @@ public class AddressController {
       return WebResponse.<AddressResponse>builder()
               .data(addressResponse)
               .message("Update Address Success")
+              .build();
+   }
+
+   @DeleteMapping(
+           path = "/api/contacts/{contactId}/addresses/{addressId}",
+           produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public WebResponse<String> remove(User user,
+                                     @PathVariable("contactId") String contactId,
+                                     @PathVariable("addressId") String addressId){
+      addressService.remove(user, contactId, addressId);
+      return WebResponse.<String>builder()
+              .message("Delete Address Success")
+              .build();
+   }
+
+   @GetMapping(
+           path = "/api/contacts/{contactId}/addresses",
+           produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public WebResponse<List<AddressResponse>> list(User user, @PathVariable("contactId") String contactId){
+      List<AddressResponse> addressResponse = addressService.list(user, contactId);
+      return WebResponse.<List<AddressResponse>>builder()
+              .data(addressResponse)
+              .message("Fetch Address List Success")
               .build();
    }
 
